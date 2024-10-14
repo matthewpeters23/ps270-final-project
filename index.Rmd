@@ -9,6 +9,10 @@ output:
 
 
 
-## Project thoughts
+## Milestone 1
 
 I am interested in exploring data to help generate insights into the effectiveness of educational programs, including classroom practices, standards for teacher education, assessments, and curricula, in order to improve learning outcomes. I might just want to focus on Wisconsin, or alternatively have a comparative approach between states. 
+
+## Milestone 2
+
+For my research, I plan on utilizing data from the National Center for Education Statistics (NCES) to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in U.S. public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student's ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.
