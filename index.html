@@ -115,7 +115,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--/radix_placeholder_rmarkdown_metadata-->
   
   <script type="text/json" id="radix-resource-manifest">
-  {"type":"character","attributes":{},"value":["index_files/anchor-4.2.2/anchor.min.js","index_files/bowser-1.9.3/bowser.min.js","index_files/distill-2.2.21/template.v2.js","index_files/header-attrs-2.17/header-attrs.js","index_files/header-attrs-2.28/header-attrs.js","index_files/jquery-3.6.0/jquery-3.6.0.js","index_files/jquery-3.6.0/jquery-3.6.0.min.js","index_files/jquery-3.6.0/jquery-3.6.0.min.map","index_files/popper-2.6.0/popper.min.js","index_files/tippy-6.2.7/tippy-bundle.umd.min.js","index_files/tippy-6.2.7/tippy-light-border.css","index_files/tippy-6.2.7/tippy.css","index_files/tippy-6.2.7/tippy.umd.min.js","index_files/webcomponents-2.0.0/webcomponents.js"]}
+  {"type":"character","attributes":{},"value":["data/attendance/attendance_certified_2022-23.csv","data/attendance/attendance_certified_2022-23_layout.csv","data/attendance/DataDisclaimer.txt","data/attendance/dropouts_certified_2022-23.csv","data/attendance/dropouts_certified_2022-23_layout.csv","data/average_daily_attendance_2022-23/2022-2023_ada_adm.xlsx","data/average_daily_attendance_2022-23/DataDisclaimer.txt","data/eligibility_district_oct_2022-23.xlsx","data/eligibility_school_oct_2023.xlsx","data/Links.txt","index_files/anchor-4.2.2/anchor.min.js","index_files/bowser-1.9.3/bowser.min.js","index_files/distill-2.2.21/template.v2.js","index_files/figure-html5/unnamed-chunk-5-1.png","index_files/header-attrs-2.17/header-attrs.js","index_files/header-attrs-2.28/header-attrs.js","index_files/jquery-3.6.0/jquery-3.6.0.js","index_files/jquery-3.6.0/jquery-3.6.0.min.js","index_files/jquery-3.6.0/jquery-3.6.0.min.map","index_files/popper-2.6.0/popper.min.js","index_files/tippy-6.2.7/tippy-bundle.umd.min.js","index_files/tippy-6.2.7/tippy-light-border.css","index_files/tippy-6.2.7/tippy.css","index_files/tippy-6.2.7/tippy.umd.min.js","index_files/webcomponents-2.0.0/webcomponents.js"]}
   </script>
   <!--radix_placeholder_navigation_in_header-->
   <!--/radix_placeholder_navigation_in_header-->
@@ -1547,6 +1547,53 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p>I am interested in exploring data to help generate insights into the effectiveness of educational programs, including classroom practices, standards for teacher education, assessments, and curricula, in order to improve learning outcomes. I might just want to focus on Wisconsin, or alternatively have a comparative approach between states.</p>
 <h2 id="milestone-2">Milestone 2</h2>
 <p>For my research, I plan on utilizing data from the National Center for Education Statistics (NCES) to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in U.S. public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student’s ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.</p>
+<h2 id="milestone-3">Milestone 3</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://tidyverse.tidyverse.org'>tidyverse</a></span><span class='op'>)</span></span>
+<span><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://readxl.tidyverse.org'>readxl</a></span><span class='op'>)</span></span></code></pre>
+</div>
+</div>
+<h3 id="reading-and-combining-data-sets-for-wisconsin-school-districts">Reading and combining data sets for Wisconsin school districts</h3>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>meals</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://readxl.tidyverse.org/reference/read_excel.html'>read_xlsx</a></span><span class='op'>(</span><span class='st'>"data/eligibility_district_oct_2022-23.xlsx"</span><span class='op'>)</span></span>
+<span><span class='va'>attendance</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://readr.tidyverse.org/reference/read_delim.html'>read_csv</a></span><span class='op'>(</span><span class='st'>"data/attendance/attendance_certified_2022-23.csv"</span><span class='op'>)</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>meals</span> <span class='op'>&lt;-</span> <span class='va'>meals</span> <span class='op'>|&gt;</span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>District_Code <span class='op'>=</span> <span class='fu'><a href='https://stringr.tidyverse.org/reference/str_sub.html'>str_sub</a></span><span class='op'>(</span><span class='va'>`Agency Code`</span>, <span class='op'>-</span><span class='fl'>4</span><span class='op'>)</span><span class='op'>)</span></span>
+<span></span>
+<span><span class='va'>combined</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate-joins.html'>left_join</a></span><span class='op'>(</span><span class='va'>meals</span>, <span class='va'>attendance</span>, by <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"District_Code"</span> <span class='op'>=</span> <span class='st'>"DISTRICT_CODE"</span><span class='op'>)</span><span class='op'>)</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>combined_all</span> <span class='op'>&lt;-</span> <span class='va'>combined</span> <span class='op'>|&gt;</span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>GROUP_BY_VALUE</span> <span class='op'>==</span> <span class='st'>"All Students"</span>,</span>
+<span>         <span class='va'>GRADE_GROUP</span> <span class='op'>==</span> <span class='st'>"[All]"</span><span class='op'>)</span> <span class='op'>|&gt;</span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='st'>"Independent Charter"</span><span class='op'>)</span> <span class='op'>|&gt;</span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='op'>(</span><span class='va'>District_Code</span><span class='op'>:</span><span class='va'>STUDENT_COUNT</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>|&gt;</span> </span>
+<span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>POSSIBLE_DAYS_OF_ATTENDANCE <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>POSSIBLE_DAYS_OF_ATTENDANCE</span><span class='op'>)</span>,</span>
+<span>         ACTUAL_DAYS_OF_ATTENDANCE <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>ACTUAL_DAYS_OF_ATTENDANCE</span><span class='op'>)</span>,</span>
+<span>         ATTENDANCE_RATE <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>ATTENDANCE_RATE</span><span class='op'>)</span><span class='op'>)</span></span></code></pre>
+</div>
+</div>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='va'>combined_all</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='va'>`% Free and Reduced`</span>, </span>
+<span>                         y <span class='op'>=</span> <span class='va'>ATTENDANCE_RATE</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span></span>
+<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>alpha <span class='op'>=</span> <span class='fl'>0.8</span>, color <span class='op'>=</span> <span class='st'>"steelblue3"</span><span class='op'>)</span> <span class='op'>+</span>  </span>
+<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_smooth.html'>geom_smooth</a></span><span class='op'>(</span>method <span class='op'>=</span> <span class='st'>"lm"</span>, se <span class='op'>=</span> <span class='cn'>FALSE</span>, color <span class='op'>=</span> <span class='st'>"indianred2"</span><span class='op'>)</span> <span class='op'>+</span></span>
+<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Relationship Between Free/Reduced Lunch Eligibility and Attendance Rates"</span>,</span>
+<span>       x <span class='op'>=</span> <span class='st'>"% of Students Receiving Free/Reduced Lunch"</span>,</span>
+<span>       y <span class='op'>=</span> <span class='st'>"Attendance Rate (%)"</span>,</span>
+<span>       caption <span class='op'>=</span> <span class='st'>"Source: Wisconsin Department of Public Instruction"</span><span class='op'>)</span></span></code></pre>
+</div>
+<p><img src="index_files/figure-html5/unnamed-chunk-5-1.png" width="624" /></p>
+</div>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->

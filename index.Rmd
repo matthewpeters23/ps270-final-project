@@ -16,3 +16,46 @@ I am interested in exploring data to help generate insights into the effectivene
 ## Milestone 2
 
 For my research, I plan on utilizing data from the National Center for Education Statistics (NCES) to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in U.S. public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student's ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.
+
+## Milestone 3
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+### Reading and combining data sets for Wisconsin school districts
+
+```{r}
+meals <- read_xlsx("data/eligibility_district_oct_2022-23.xlsx")
+attendance <- read_csv("data/attendance/attendance_certified_2022-23.csv")
+```
+
+```{r}
+meals <- meals |> 
+  mutate(District_Code = str_sub(`Agency Code`, -4))
+
+combined <- left_join(meals, attendance, by = c("District_Code" = "DISTRICT_CODE"))
+```
+
+```{r}
+combined_all <- combined |> 
+  filter(GROUP_BY_VALUE == "All Students",
+         GRADE_GROUP == "[All]") |> 
+  select(-"Independent Charter") |> 
+  select(-(District_Code:STUDENT_COUNT)) |> 
+  mutate(POSSIBLE_DAYS_OF_ATTENDANCE = as.numeric(POSSIBLE_DAYS_OF_ATTENDANCE),
+         ACTUAL_DAYS_OF_ATTENDANCE = as.numeric(ACTUAL_DAYS_OF_ATTENDANCE),
+         ATTENDANCE_RATE = as.numeric(ATTENDANCE_RATE))
+```
+
+```{r}
+ggplot(combined_all, aes(x = `% Free and Reduced`, 
+                         y = ATTENDANCE_RATE)) +
+  geom_point(alpha = 0.8, color = "steelblue3") +  
+  geom_smooth(method = "lm", se = FALSE, color = "indianred2") +
+  labs(title = "Relationship Between Free/Reduced Lunch Eligibility and Attendance Rates",
+       x = "% of Students Receiving Free/Reduced Lunch",
+       y = "Attendance Rate (%)",
+       caption = "Source: Wisconsin Department of Public Instruction")
+```

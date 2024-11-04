@@ -1,0 +1,11 @@
+Average Daily Attendance: 
+	
+	https://dpi.wi.gov/wisedash/download-files/type?field_wisedash_upload_type_value=average_daily_attendance
+
+
+
+https://dpi.wi.gov/wisedash/download-files/type?field_wisedash_upload_type_value=Attendance 
+
+Eligibility:
+
+	https://dpi.wi.gov/school-nutrition/program-statistics
