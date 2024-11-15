@@ -15,7 +15,7 @@ I am interested in exploring data to help generate insights into the effectivene
 
 ## Milestone 2
 
-For my research, I plan on utilizing data from the National Center for Education Statistics (NCES) to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in U.S. public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student's ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.
+For my research, I plan on utilizing data from the Wisconsin Department of Public Instruction to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in Wisconsin public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student's ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.
 
 ## Milestone 3
 
@@ -46,7 +46,8 @@ combined_all <- combined |>
   select(-(District_Code:STUDENT_COUNT)) |> 
   mutate(POSSIBLE_DAYS_OF_ATTENDANCE = as.numeric(POSSIBLE_DAYS_OF_ATTENDANCE),
          ACTUAL_DAYS_OF_ATTENDANCE = as.numeric(ACTUAL_DAYS_OF_ATTENDANCE),
-         ATTENDANCE_RATE = as.numeric(ATTENDANCE_RATE))
+         ATTENDANCE_RATE = as.numeric(ATTENDANCE_RATE),
+         ATTENDANCE_RATE = ATTENDANCE_RATE / 100)
 ```
 
 ```{r}
@@ -59,6 +60,26 @@ ggplot(combined_all, aes(x = `% Free and Reduced`,
        y = "Attendance Rate by School District (%)",
        caption = "Source: Wisconsin Department of Public Instruction") +
   scale_x_continuous(labels = scales::percent) + 
-  scale_y_continuous(labels = scales::label_percent(scale = 1)) + 
-  theme_light()
+  scale_y_continuous(labels = scales::percent) + 
+  theme_light() +
+  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
 ```
+
+## Milestone 4
+
+```{r}
+fit_school <- lm(ATTENDANCE_RATE ~ `% Free and Reduced`, data = combined_all)
+fit_school_summary <- summary(fit_school)
+intercept_school <- fit_school_summary$coefficients[1, 1] 
+coefficient_school <- fit_school_summary$coefficients[2, 1]  
+rsquared_school <- fit_school_summary$r.squared 
+school_results <- data.frame(Parameter = c("Intercept", "Coefficient for % Free/Reduced Lunch", "R-squared Value"),
+                             Estimate = c(intercept_school, coefficient_school, rsquared_school))
+knitr::kable(school_results, caption = "Linear Model Results", digits = 3)
+```
+
+The intercept estimate predicts that a school district with 0% of students eligible for free/reduced-price lunch will have an attendance rate of 96.2%. 
+
+The coefficient estimates that for every 1% increase in the proportion of students eligible for free/reduced-price lunch within a school district, the attendance rate decreases by 0.061%. This result supports the hypothesis that higher levels of socioeconomic disadvantaged students, as measured by lunch eligibility, are associated with lower student attendance rates.  
+
+The R-squared value suggests that about 28.3% of the variation in student attendance rates can be explained by the percentage of students eligible for free/reduced-price lunch. This suggests that while free/reduced lunch eligibility is a meaningful predictor, there are other factors at play that also affect attendance rates.

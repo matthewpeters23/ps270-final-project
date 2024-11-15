@@ -1546,7 +1546,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <h2 id="milestone-1">Milestone 1</h2>
 <p>I am interested in exploring data to help generate insights into the effectiveness of educational programs, including classroom practices, standards for teacher education, assessments, and curricula, in order to improve learning outcomes. I might just want to focus on Wisconsin, or alternatively have a comparative approach between states.</p>
 <h2 id="milestone-2">Milestone 2</h2>
-<p>For my research, I plan on utilizing data from the National Center for Education Statistics (NCES) to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in U.S. public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student’s ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.</p>
+<p>For my research, I plan on utilizing data from the Wisconsin Department of Public Instruction to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in Wisconsin public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student’s ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.</p>
 <h2 id="milestone-3">Milestone 3</h2>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
@@ -1578,7 +1578,8 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span><span class='op'>-</span><span class='op'>(</span><span class='va'>District_Code</span><span class='op'>:</span><span class='va'>STUDENT_COUNT</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>|&gt;</span> </span>
 <span>  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>POSSIBLE_DAYS_OF_ATTENDANCE <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>POSSIBLE_DAYS_OF_ATTENDANCE</span><span class='op'>)</span>,</span>
 <span>         ACTUAL_DAYS_OF_ATTENDANCE <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>ACTUAL_DAYS_OF_ATTENDANCE</span><span class='op'>)</span>,</span>
-<span>         ATTENDANCE_RATE <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>ATTENDANCE_RATE</span><span class='op'>)</span><span class='op'>)</span></span></code></pre>
+<span>         ATTENDANCE_RATE <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>ATTENDANCE_RATE</span><span class='op'>)</span>,</span>
+<span>         ATTENDANCE_RATE <span class='op'>=</span> <span class='va'>ATTENDANCE_RATE</span> <span class='op'>/</span> <span class='fl'>100</span><span class='op'>)</span></span></code></pre>
 </div>
 </div>
 <div class="layout-chunk" data-layout="l-body">
@@ -1592,11 +1593,51 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <span>       y <span class='op'>=</span> <span class='st'>"Attendance Rate by School District (%)"</span>,</span>
 <span>       caption <span class='op'>=</span> <span class='st'>"Source: Wisconsin Department of Public Instruction"</span><span class='op'>)</span> <span class='op'>+</span></span>
 <span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_continuous.html'>scale_x_continuous</a></span><span class='op'>(</span>labels <span class='op'>=</span> <span class='fu'>scales</span><span class='fu'>::</span><span class='va'><a href='https://scales.r-lib.org/reference/percent_format.html'>percent</a></span><span class='op'>)</span> <span class='op'>+</span> </span>
-<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_continuous.html'>scale_y_continuous</a></span><span class='op'>(</span>labels <span class='op'>=</span> <span class='fu'>scales</span><span class='fu'>::</span><span class='fu'><a href='https://scales.r-lib.org/reference/label_percent.html'>label_percent</a></span><span class='op'>(</span>scale <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> </span>
-<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_light</a></span><span class='op'>(</span><span class='op'>)</span></span></code></pre>
+<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_continuous.html'>scale_y_continuous</a></span><span class='op'>(</span>labels <span class='op'>=</span> <span class='fu'>scales</span><span class='fu'>::</span><span class='va'><a href='https://scales.r-lib.org/reference/percent_format.html'>percent</a></span><span class='op'>)</span> <span class='op'>+</span> </span>
+<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_light</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span></span>
+<span>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme.html'>theme</a></span><span class='op'>(</span>plot.title <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size <span class='op'>=</span> <span class='fl'>14</span>, face <span class='op'>=</span> <span class='st'>"bold"</span>, hjust <span class='op'>=</span> <span class='fl'>0.5</span><span class='op'>)</span><span class='op'>)</span></span></code></pre>
 </div>
 <p><img src="index_files/figure-html5/unnamed-chunk-5-1.png" width="624" /></p>
 </div>
+<h2 id="milestone-4">Milestone 4</h2>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span><span class='va'>fit_school</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/lm.html'>lm</a></span><span class='op'>(</span><span class='va'>ATTENDANCE_RATE</span> <span class='op'>~</span> <span class='va'>`% Free and Reduced`</span>, data <span class='op'>=</span> <span class='va'>combined_all</span><span class='op'>)</span></span>
+<span><span class='va'>fit_school_summary</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>fit_school</span><span class='op'>)</span></span>
+<span><span class='va'>intercept_school</span> <span class='op'>&lt;-</span> <span class='va'>fit_school_summary</span><span class='op'>$</span><span class='va'>coefficients</span><span class='op'>[</span><span class='fl'>1</span>, <span class='fl'>1</span><span class='op'>]</span> </span>
+<span><span class='va'>coefficient_school</span> <span class='op'>&lt;-</span> <span class='va'>fit_school_summary</span><span class='op'>$</span><span class='va'>coefficients</span><span class='op'>[</span><span class='fl'>2</span>, <span class='fl'>1</span><span class='op'>]</span>  </span>
+<span><span class='va'>rsquared_school</span> <span class='op'>&lt;-</span> <span class='va'>fit_school_summary</span><span class='op'>$</span><span class='va'>r.squared</span> </span>
+<span><span class='va'>school_results</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>Parameter <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Intercept"</span>, <span class='st'>"Coefficient for % Free/Reduced Lunch"</span>, <span class='st'>"R-squared Value"</span><span class='op'>)</span>,</span>
+<span>                             Estimate <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>intercept_school</span>, <span class='va'>coefficient_school</span>, <span class='va'>rsquared_school</span><span class='op'>)</span><span class='op'>)</span></span>
+<span><span class='fu'>knitr</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/knitr/man/kable.html'>kable</a></span><span class='op'>(</span><span class='va'>school_results</span>, caption <span class='op'>=</span> <span class='st'>"Linear Model Results"</span>, digits <span class='op'>=</span> <span class='fl'>3</span><span class='op'>)</span></span></code></pre>
+</div>
+<table>
+<caption><span id="tab:unnamed-chunk-6">Table 1: </span>Linear Model Results</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: right;">Estimate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Intercept</td>
+<td style="text-align: right;">0.962</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Coefficient for % Free/Reduced Lunch</td>
+<td style="text-align: right;">-0.061</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">R-squared Value</td>
+<td style="text-align: right;">0.283</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The intercept estimate predicts that a school district with 0% of students eligible for free/reduced-price lunch will have an attendance rate of 96.2%.</p>
+<p>The coefficient estimates that for every 1% increase in the proportion of students eligible for free/reduced-price lunch within a school district, the attendance rate decreases by 0.061%. This result supports the hypothesis that higher levels of socioeconomic disadvantaged students, as measured by lunch eligibility, are associated with lower student attendance rates.</p>
+<p>The R-squared value suggests that about 28.3% of the variation in student attendance rates can be explained by the percentage of students eligible for free/reduced-price lunch. This suggests that while free/reduced lunch eligibility is a meaningful predictor, there are other factors at play that also affect attendance rates.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
