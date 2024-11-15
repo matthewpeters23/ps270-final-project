@@ -52,10 +52,13 @@ combined_all <- combined |>
 ```{r}
 ggplot(combined_all, aes(x = `% Free and Reduced`, 
                          y = ATTENDANCE_RATE)) +
-  geom_point(alpha = 0.8, color = "steelblue3") +  
+  geom_point(alpha = 0.5, color = "steelblue3") +  
   geom_smooth(method = "lm", se = FALSE, color = "indianred2") +
-  labs(title = "Relationship Between Free/Reduced Lunch Eligibility and Attendance Rates",
-       x = "% of Students Receiving Free/Reduced Lunch",
-       y = "Attendance Rate (%)",
-       caption = "Source: Wisconsin Department of Public Instruction")
+  labs(title = "Relationship Between Free/Reduced Lunch Eligibility and\nAttendance Rates in Wisconsin Public School Districts (2023)",
+       x = "% of Students Receiving Free/Reduced Lunch by School District",
+       y = "Attendance Rate by School District (%)",
+       caption = "Source: Wisconsin Department of Public Instruction") +
+  scale_x_continuous(labels = scales::percent) + 
+  scale_y_continuous(labels = scales::label_percent(scale = 1)) + 
+  theme_light()
 ```
