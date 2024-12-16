@@ -64,13 +64,13 @@ combined_all <- combined |>
 ```{r Dependent Histogram}
 ggplot(combined_all, aes(x = ATTENDANCE_RATE)) +
   geom_histogram(binwidth = 0.01, fill = "steelblue3", color = "white") +
-  labs(title = "Distribution of Attendance Rates Across Wisconsin School Districts",
+  labs(title = "Distribution of Attendance Rates\nAcross Wisconsin School Districts",
        x = "Attendance Rate (%)",
        y = "Number of School Districts",
        caption = "Source: Wisconsin Department of Public Instruction") +
   scale_x_continuous(labels = scales::percent, limits = c(0.8, 1)) +
   theme_light() +
-  theme(plot.title = element_text(size = 13, face = "bold", hjust = 0.5))
+  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
 ```
 
 ## Results of Data Analysis
