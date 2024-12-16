@@ -1,44 +1,53 @@
 ---
 title: "PS270 Final Project"
 author: "Matt Peters"
-description: "My final project"
 output:
   distill::distill_article:
     self_contained: false
 ---
 
 
+## Introduction
 
-## Milestone 1
+Access to education is widely recognized as a cornerstone of social and economic development, but significant disparities persist in how students from different socioeconomic backgrounds experience and benefit from the educational system. One key measure of socioeconomic status is eligibility for free or reduced-price lunch programs, which serve as a proxy for economic disadvantage in public schools. Understanding how socioeconomic factors influence educational outcomes is crucial for policymakers aiming to close achievement gaps and promote equity in education.
 
-I am interested in exploring data to help generate insights into the effectiveness of educational programs, including classroom practices, standards for teacher education, assessments, and curricula, in order to improve learning outcomes. I might just want to focus on Wisconsin, or alternatively have a comparative approach between states. 
+This study focuses on the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in Wisconsin public schools. The research question guiding this analysis is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? The hypothesis is that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. This hypothesis is grounded in the theory that socioeconomic challenges—such as financial instability, lack of transportation, and health issues—can hinder a student's ability to attend school regularly.
 
-## Milestone 2
+Attendance rates are a key indicator of student engagement and academic success, and disparities in attendance can exacerbate educational inequities over time. By examining this relationship in Wisconsin, a state with diverse socioeconomic and geographic characteristics, this research aims to contribute to a better understanding of how poverty influences educational participation.
 
-For my research, I plan on utilizing data from the Wisconsin Department of Public Instruction to examine the relationship between the percentage of students receiving free or reduced-price lunch and student attendance rates in Wisconsin public schools. My research question is: How does the socioeconomic status of students, as measured by free or reduced-price lunch eligibility, affect their attendance rates? I hypothesize that higher percentages of students eligible for free or reduced-price lunch will correlate with lower attendance rates. I am basing this on the theory that socioeconomic challenges can hinder a student's ability to attend school regularly, whether that be originating from financial instability, lack of transportation, health issues, or more. The independent variable, percentage of students receiving free or reduced-price lunch, is measured as a percentage of the student population and varies across different school districts. The dependent variable, student attendance rates, is measured as the percentage of students attending school regularly. A negative correlation, where higher percentages of students receiving lunch assistance are associated with lower attendance rates, would support my hypothesis. Conversely, if the data shows no significant correlation or a positive relationship, it would challenge my hypothesis, indicating that other factors, such as parental support or school culture, may play a more significant role in student attendance.
+## Data Overview
 
-## Milestone 3
+The data for this analysis is sourced from the Wisconsin Department of Public Instruction (DPI), which collects annual statistics as part of its mandated reporting requirements. The key variables in this study are the percentage of students eligible for free or reduced-price lunch (independent variable) and student attendance rates (dependent variable).
 
-```{r}
+The percentage of students eligible for free or reduced-price lunch is derived from annual enrollment and participation reports, which are based on annual October reimbursement claims submitted by local education agencies to the DPI. These claims provide data on meal participation by free/reduced-price categories, and the eligibility data used in this study specifically focuses on public schools at the district level. For districts participating in the Community Eligibility Provision (CEP), all students are eligible to receive free meals, which may result in a reported 100% eligibility rate.
+
+Attendance data is obtained from WISEdata, the state’s attendance collection system. Attendance is defined as the contact between a student and a teacher during which district-supervised PK-12 educational services are provided, whether in a school building or through virtual platforms. Each school district sets its own attendance policies, and the data submitted to WISEdata reflects these policies. 
+
+Actual days of attendance represents the number of days a student was physically or virtually present and engaged in district-supervised educational services. For example, students who participate in at least 66% of educational services in a day accrue a full day (1.0) of attendance. Possible days of attendance represents the total number of days a student could have attended during the school term, adjusted for partial-year enrollment. Attendance rates are calculated as the ratio of actual days of attendance to possible days of attendance, expressed as a percentage.
+
+
+
+```{r Loading Packages}
 library(tidyverse)
 library(readxl)
+library(kableExtra)
 ```
 
-### Reading and combining data sets for Wisconsin school districts
+### Reading and Combining Data Sets for Wisconsin School Districts
 
-```{r}
+```{r Reading Datasets}
 meals <- read_xlsx("data/eligibility_district_oct_2022-23.xlsx")
 attendance <- read_csv("data/attendance/attendance_certified_2022-23.csv")
 ```
 
-```{r}
+```{r Joining Datasets}
 meals <- meals |> 
   mutate(District_Code = str_sub(`Agency Code`, -4))
 
 combined <- left_join(meals, attendance, by = c("District_Code" = "DISTRICT_CODE"))
 ```
 
-```{r}
+```{r Cleaning Dataset}
 combined_all <- combined |> 
   filter(GROUP_BY_VALUE == "All Students",
          GRADE_GROUP == "[All]") |> 
@@ -50,7 +59,23 @@ combined_all <- combined |>
          ATTENDANCE_RATE = ATTENDANCE_RATE / 100)
 ```
 
-```{r}
+### Summary of Dependent Variable
+
+```{r Dependent Histogram}
+ggplot(combined_all, aes(x = ATTENDANCE_RATE)) +
+  geom_histogram(binwidth = 0.01, fill = "steelblue3", color = "white") +
+  labs(title = "Distribution of Attendance Rates Across Wisconsin School Districts",
+       x = "Attendance Rate (%)",
+       y = "Number of School Districts",
+       caption = "Source: Wisconsin Department of Public Instruction") +
+  scale_x_continuous(labels = scales::percent, limits = c(0.8, 1)) +
+  theme_light() +
+  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
+```
+
+## Results of Data Analysis
+
+```{r Scatterplot}
 ggplot(combined_all, aes(x = `% Free and Reduced`, 
                          y = ATTENDANCE_RATE)) +
   geom_point(alpha = 0.5, color = "steelblue3") +  
@@ -60,26 +85,39 @@ ggplot(combined_all, aes(x = `% Free and Reduced`,
        y = "Attendance Rate by School District (%)",
        caption = "Source: Wisconsin Department of Public Instruction") +
   scale_x_continuous(labels = scales::percent) + 
-  scale_y_continuous(labels = scales::percent) + 
+  scale_y_continuous(labels = scales::percent, limits = c(0.8, 1)) + 
   theme_light() +
   theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
 ```
 
-## Milestone 4
-
-```{r}
+```{r Linear Regression}
 fit_school <- lm(ATTENDANCE_RATE ~ `% Free and Reduced`, data = combined_all)
 fit_school_summary <- summary(fit_school)
 intercept_school <- fit_school_summary$coefficients[1, 1] 
 coefficient_school <- fit_school_summary$coefficients[2, 1]  
 rsquared_school <- fit_school_summary$r.squared 
-school_results <- data.frame(Parameter = c("Intercept", "Coefficient for % Free/Reduced Lunch", "R-squared Value"),
-                             Estimate = c(intercept_school, coefficient_school, rsquared_school))
-knitr::kable(school_results, caption = "Linear Model Results", digits = 3)
+pvalue_school <- fit_school_summary$coefficients[2, 4]
+school_results <- data.frame(Parameter = c("Intercept", "Coefficient for % Free/Reduced Lunch", "P-value for Coefficient", "R-squared Value"),
+                             Estimate = c(intercept_school, coefficient_school, pvalue_school, rsquared_school))
+
+school_results |> 
+  kable(digits = 3) |> 
+  kable_styling(full_width = FALSE, position = "center", font_size = 14) |> 
+  add_header_above(c(" " = 1, "Linear Model Results" = 1))
+  
 ```
+
 
 The intercept estimate predicts that a school district with 0% of students eligible for free/reduced-price lunch will have an attendance rate of 96.2%. 
 
 The coefficient estimates that for every 1% increase in the proportion of students eligible for free/reduced-price lunch within a school district, the attendance rate decreases by 0.061%. This result supports the hypothesis that higher levels of socioeconomic disadvantaged students, as measured by lunch eligibility, are associated with lower student attendance rates.  
 
+The p-value for the coefficient is 0, indicating that the relationship between the percentage of students eligible for free/reduced-price lunch and attendance rates is statistically significant at any conventional significance level. This means there is strong evidence to suggest that the observed relationship is not due to random chance.
+
 The R-squared value suggests that about 28.3% of the variation in student attendance rates can be explained by the percentage of students eligible for free/reduced-price lunch. This suggests that while free/reduced lunch eligibility is a meaningful predictor, there are other factors at play that also affect attendance rates.
+
+Although the regression results indicate a negative correlation between the percentage of students eligible for free/reduced-price lunch and attendance rates, this does not imply causation. Free/reduced lunch eligibility is not randomly assigned; it is a proxy for socioeconomic disadvantage, which is linked to numerous other factors that might influence attendance. A causal interpretation would require something akin to a randomized control trial to isolate the effect of lunch program eligibility on attendance.
+
+## Conclusion
+
+This analysis finds strong support for the hypothesis that higher percentages of students eligible for free or reduced-price lunch are associated with lower attendance rates in Wisconsin public school districts. The statistically significant negative coefficient indicates that a 1% increase in lunch eligibility correlates with a 0.061% decrease in attendance rates, and the R-squared value suggests that free/reduced lunch eligibility explains approximately 28.3% of the variation in attendance rates. However, free/reduced lunch eligibility serves only as a proxy for poverty, capturing a broader population of students from households slightly above the federal poverty line and those covered by policies like the Community Eligibility Provision. This measure, while convenient and widely available, may not perfectly reflect the actual socioeconomic status of students. Additionally, these results are limited by the observational nature of the study, which does not account for potential confounding factors. Furthermore, variations in how districts report attendance and eligibility data may introduce measurement error. To improve this analysis, collecting data on additional variables, such as district funding, teacher-student ratios, or transportation access, would help control for confounding influences.
