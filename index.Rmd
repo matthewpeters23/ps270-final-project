@@ -70,7 +70,8 @@ ggplot(combined_all, aes(x = ATTENDANCE_RATE)) +
        caption = "Source: Wisconsin Department of Public Instruction") +
   scale_x_continuous(labels = scales::percent, limits = c(0.8, 1)) +
   theme_light() +
-  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
+  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)) +
+  theme(panel.border = element_blank())
 ```
 
 ## Results of Data Analysis
@@ -87,7 +88,8 @@ ggplot(combined_all, aes(x = `% Free and Reduced`,
   scale_x_continuous(labels = scales::percent) + 
   scale_y_continuous(labels = scales::percent, limits = c(0.8, 1)) + 
   theme_light() +
-  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
+  theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5)) +
+  theme(panel.border = element_blank())
 ```
 
 ```{r Linear Regression}
