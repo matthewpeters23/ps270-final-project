@@ -31,6 +31,9 @@ Actual days of attendance represents the number of days a student was physically
 library(tidyverse)
 library(readxl)
 library(kableExtra)
+library(rvest)
+library(httr)
+library(fs)
 ```
 
 ### Reading and Combining Data Sets for Wisconsin School Districts
@@ -123,3 +126,367 @@ Although the regression results indicate a negative correlation between the perc
 ## Conclusion
 
 This analysis finds strong support for the hypothesis that higher percentages of students eligible for free or reduced-price lunch are associated with lower attendance rates in Wisconsin public school districts. The statistically significant negative coefficient indicates that a 1% increase in lunch eligibility correlates with a 0.061% decrease in attendance rates, and the R-squared value suggests that free/reduced lunch eligibility explains approximately 28.3% of the variation in attendance rates. However, free/reduced lunch eligibility serves only as a proxy for poverty, capturing a broader population of students from households slightly above the federal poverty line and those covered by policies like the Community Eligibility Provision. This measure, while convenient and widely available, may not perfectly reflect the actual socioeconomic status of students. Additionally, these results are limited by the observational nature of the study, which does not account for potential confounding factors. Furthermore, variations in how districts report attendance and eligibility data may introduce measurement error. To improve this analysis, collecting data on additional variables, such as district funding, teacher-student ratios, or transportation access, would help control for confounding influences.
+
+## Follow-up Analysis
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+base_url <- "https://dpi.wi.gov/wisedash/download-files/type?field_wisedash_upload_type_value=average_daily_attendance"
+page <- read_html(base_url)
+zip_links <- page |> 
+  html_nodes("a") |> 
+  html_attr("href") |> 
+  na.omit() |> 
+  str_subset("average_daily_attendance_\\d{4}-\\d{2}\\.zip") |> 
+  unique()
+
+temp_dir <- path_temp()
+dir_create(temp_dir)
+attendance_data <- list()
+
+for (link in zip_links) {
+  zip_path <- path(temp_dir, basename(link))
+  GET(link, write_disk(zip_path, overwrite = TRUE))
+  unzip(zip_path, exdir = temp_dir)
+  excel_file <- dir_ls(temp_dir, regexp = "\\.xlsx?$")
+  
+  if (length(excel_file) == 1) {
+    sheets <- excel_sheets(excel_file)
+    
+    if (length(sheets) == 1) {
+      df <- read_excel(excel_file, sheet = 1)
+    } else {
+      df <- read_excel(excel_file, sheet = length(sheets), skip = 2)
+    }
+
+    df <- df |> 
+      rename_with(~ str_replace_all(., "Attandance", "Attendance")) |> 
+      mutate(`Dist Code` = str_pad(as.character(`Dist Code`), width = 4, side = "left", pad = "0"),
+             across(c(`Dist Code`, `District Name`), as.character),
+             Year = str_extract(basename(excel_file), "\\d{4}"),
+             across(c(`Days of Instruction`, `Actual Days of Attendance`, `Possible Days of Attendance`, Year), as.numeric),
+             `Attendance Rate` = `Actual Days of Attendance`/`Possible Days of Attendance`) |> 
+      select(c(`Dist Code`, `District Name`, Year, `Attendance Rate`))
+
+    attendance_data <- append(attendance_data, list(df))
+
+  }
+  
+  file_delete(excel_file)
+}
+
+avg_attendance <- bind_rows(attendance_data)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+base_url <- "https://dpi.wi.gov/wisedash/download-files/type?field_wisedash_upload_type_value=homeless"
+page <- read_html(base_url)
+zip_links <- page |> 
+  html_nodes("a") |> 
+  html_attr("href") |> 
+  na.omit() |> 
+  str_subset("homeless_certified_\\d{4}-\\d{2}\\.zip") |> 
+  unique()
+
+temp_dir <- path_temp()
+dir_create(temp_dir)
+homeless_data <- list()
+
+for (link in zip_links) {
+  zip_path <- path(temp_dir, basename(link))
+  GET(link, write_disk(zip_path, overwrite = TRUE))
+  unzip(zip_path, exdir = temp_dir)
+  csv_file <- dir_ls(temp_dir, regexp = "\\.csv$") |> 
+    str_subset("_layout", negate = TRUE)
+  
+  if (length(csv_file) == 1) {
+    df <- read_csv(csv_file, show_col_types = FALSE)
+    
+    df <- df |> 
+      mutate(Year = str_extract(basename(csv_file), "\\d{4}"),
+             `DISTRICT_CODE` = str_pad(as.character(`DISTRICT_CODE`), width = 4, side = "left", pad = "0"),
+             across(c(Year, STUDENT_COUNT), as.numeric)) |> 
+      filter(GROUP_BY_VALUE == "All Students",
+         GRADE_GROUP == "[All]",
+         UNACCOMPANIED_YOUTH_STATUS == "All Accompanied and Unaccompanied Youth",
+         DISTRICT_CODE != "0000") |> 
+      select(c(DISTRICT_CODE, Year, STUDENT_COUNT)) |> 
+      rename("Homeless Count" = STUDENT_COUNT)
+    
+    homeless_data <- append(homeless_data, list(df))
+  }
+
+  file_delete(csv_file)
+}
+
+homeless <- bind_rows(homeless_data)
+
+combined <- full_join(avg_attendance, homeless, by = c("Dist Code" = "DISTRICT_CODE", "Year" = "Year"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+base_url <- "https://dpi.wi.gov/wisedash/download-files/type?field_wisedash_upload_type_value=Enrollment"
+page <- read_html(base_url)
+zip_links <- page |> 
+  html_nodes("a") |> 
+  html_attr("href") |> 
+  na.omit() |> 
+  str_subset("enrollment_certified_\\d{4}-\\d{2}\\.zip") |> 
+  unique()
+
+temp_dir <- path_temp()
+dir_create(temp_dir)
+enrollment_data <- list()
+
+for (link in zip_links) {
+  zip_path <- path(temp_dir, basename(link))
+  GET(link, write_disk(zip_path, overwrite = TRUE))
+  unzip(zip_path, exdir = temp_dir)
+  csv_file <- dir_ls(temp_dir, regexp = "\\.csv$") |> 
+    str_subset("_layout", negate = TRUE)
+  
+  if (length(csv_file) == 1) {
+    df <- read_csv(csv_file, show_col_types = FALSE)
+    
+    df <- df |> 
+      mutate(Year = str_extract(basename(csv_file), "\\d{4}"),
+             `DISTRICT_CODE` = str_pad(as.character(`DISTRICT_CODE`), width = 4, side = "left", pad = "0"),
+             across(c(Year, STUDENT_COUNT), as.numeric)) |> 
+      filter(GROUP_BY_VALUE == "All Students",
+         GRADE_GROUP == "[All]",
+         DISTRICT_CODE != "0000") |> 
+      select(c(DISTRICT_CODE, Year, STUDENT_COUNT)) |>
+      rename("Enrollment Count" = STUDENT_COUNT)
+    
+    enrollment_data <- append(enrollment_data, list(df))
+  }
+
+  file_delete(csv_file)
+}
+
+enrollment <- bind_rows(enrollment_data)
+
+combined <- full_join(combined, enrollment, by = c("Dist Code" = "DISTRICT_CODE", "Year" = "Year"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+base_url <- "https://dpi.wi.gov/wisedash/download-files/type?field_wisedash_upload_type_value=hs-completion"
+page <- read_html(base_url)
+zip_links <- page |> 
+  html_nodes("a") |> 
+  html_attr("href") |> 
+  na.omit() |> 
+  str_subset("hs_completion_certified_\\d{4}-\\d{2}\\.zip") |> 
+  unique()
+
+temp_dir <- path_temp()
+dir_create(temp_dir)
+hs_completion_data <- list()
+
+for (link in zip_links) {
+  zip_path <- path(temp_dir, basename(link))
+  GET(link, write_disk(zip_path, overwrite = TRUE))
+  unzip(zip_path, exdir = temp_dir)
+  csv_file <- dir_ls(temp_dir, regexp = "\\.csv$") |> 
+    str_subset("_layout", negate = TRUE)
+  
+  if (length(csv_file) == 1) {
+    df <- read_csv(csv_file, show_col_types = FALSE)
+    
+    df <- df |> 
+      mutate(Year = str_extract(basename(csv_file), "\\d{4}"),
+             `DISTRICT_CODE` = str_pad(as.character(`DISTRICT_CODE`), width = 4, side = "left", pad = "0"),
+             across(c(Year, STUDENT_COUNT, COHORT_COUNT), as.numeric)) |> 
+      filter(GROUP_BY_VALUE == "All Students",
+         GRADE_GROUP == "[All]",
+         DISTRICT_CODE != "0000",
+         COMPLETION_STATUS %in% c("Completed - Regular High School Diploma", 
+                                  "Completed - Other", 
+                                  "Completed - Regular", 
+                                  "Completed - HSED")) |> 
+  group_by(DISTRICT_CODE, Year, COHORT) |>  
+  summarize(Total_Completed = sum(STUDENT_COUNT, na.rm = TRUE), 
+            Total_Cohort = first(COHORT_COUNT), 
+            .groups = "drop") |> 
+  group_by(DISTRICT_CODE, Year) |>
+  summarize(`HS Completion Rate` = sum(Total_Completed) / sum(Total_Cohort), 
+            .groups = "drop")
+    
+    hs_completion_data <- append(hs_completion_data, list(df))
+  }
+
+  file_delete(csv_file)
+}
+
+hs_completion <- bind_rows(hs_completion_data)
+
+combined <- full_join(combined, hs_completion, by = c("Dist Code" = "DISTRICT_CODE", "Year" = "Year"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+base_url <- "https://dpi.wi.gov/wisedash/download-files/type?field_wisedash_upload_type_value=ACT11"
+page <- read_html(base_url)
+zip_links <- page |> 
+  html_nodes("a") |> 
+  html_attr("href") |> 
+  na.omit() |> 
+  str_subset("act_statewide_certified_\\d{4}-\\d{2}\\.zip") |> 
+  unique()
+
+temp_dir <- path_temp()
+dir_create(temp_dir)
+act_data <- list()
+
+for (link in zip_links) {
+  zip_path <- path(temp_dir, basename(link))
+  GET(link, write_disk(zip_path, overwrite = TRUE))
+  unzip(zip_path, exdir = temp_dir)
+  csv_file <- dir_ls(temp_dir, regexp = "\\.csv$") |> 
+    str_subset("_layout", negate = TRUE)
+  
+  if (length(csv_file) == 1) {
+    df <- read_csv(csv_file, show_col_types = FALSE)
+    
+    df <- df |> 
+      mutate(Year = str_extract(basename(csv_file), "\\d{4}"),
+             `DISTRICT_CODE` = str_pad(as.character(`DISTRICT_CODE`), width = 4, side = "left", pad = "0"),
+             across(c(Year, STUDENT_COUNT, AVERAGE_SCORE), as.numeric)) |> 
+      filter(GROUP_BY_VALUE == "All Students",
+         GRADE_GROUP == "[All]",
+         DISTRICT_CODE != "0000",
+         TEST_SUBJECT == "Composite" | TEST_SUBJECT == "Writing",
+         TEST_RESULT == "Not Benchmarked") |> 
+      select(c(DISTRICT_CODE, Year, TEST_SUBJECT, AVERAGE_SCORE)) |> 
+      mutate(AVERAGE_SCORE = if_else(Year == 2015 & TEST_SUBJECT == "Writing", AVERAGE_SCORE / 3, AVERAGE_SCORE)) |> 
+      pivot_wider(names_from = TEST_SUBJECT, 
+                  values_from = AVERAGE_SCORE) |> 
+      mutate(Writing = round(Writing, 2))
+    
+    act_data <- append(act_data, list(df))
+  }
+
+  file_delete(csv_file)
+}
+
+act <- bind_rows(act_data)
+
+combined <- full_join(combined, act, by = c("Dist Code" = "DISTRICT_CODE", "Year" = "Year"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+base_url <- "https://dpi.wi.gov/school-nutrition/program-statistics"
+page <- read_html(base_url)
+excel_links <- page |> 
+  html_nodes("a") |> 
+  html_attr("href") |> 
+  na.omit() |> 
+  unique()
+
+excel_links <- if_else(str_detect(excel_links, "^http"), excel_links, paste0("https://dpi.wi.gov", excel_links))
+
+excel_links <- excel_links[str_detect(excel_links, regex("public", ignore_case = TRUE)) & 
+                       str_detect(excel_links, regex("district", ignore_case = TRUE)) &
+                       !str_detect(excel_links, regex("sbp", ignore_case = TRUE))]
+
+temp_dir <- path_temp()
+dir_create(temp_dir)
+food_data <- list()
+
+for (link in excel_links) {
+  excel_path <- path(temp_dir, basename(link))
+  GET(link, write_disk(excel_path, overwrite = TRUE))
+
+  df <- read_excel(excel_path, sheet = 1)
+  
+  year <- str_extract(basename(link), "\\d{4}")
+
+  df <- df |>
+    filter(`Independent Charter` == "No") |> 
+    mutate(DISTRICT_CODE = str_sub(`Agency Code`, -4), 
+           Year = year,
+           across(c(Year, `% Free and Reduced`), as.numeric)) |> # can include `% Free` and `% Reduced Price`
+    select(c(DISTRICT_CODE, Year, `% Free and Reduced`)) # same here
+
+  food_data[[basename(link)]] <- df
+
+  file_delete(excel_path)
+}
+
+food <- bind_rows(food_data)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+base_url <- "https://dpi.wi.gov/school-nutrition/program-statistics/archive#epr"
+page <- read_html(base_url)
+excel_links <- page |> 
+  html_nodes("a") |> 
+  html_attr("href") |> 
+  na.omit() |> 
+  unique()
+
+excel_links <- if_else(str_detect(excel_links, "^http"), excel_links, paste0("https://dpi.wi.gov", excel_links))
+
+excel_links <- excel_links[str_detect(excel_links, regex("public-", ignore_case = TRUE)) & 
+                       !str_detect(excel_links, regex("level", ignore_case = TRUE)) &
+                       !str_detect(excel_links, regex("sb", ignore_case = TRUE))]
+
+temp_dir <- path_temp()
+dir_create(temp_dir)
+food_data_2 <- list()
+
+for (link in excel_links) {
+  excel_path <- path(temp_dir, basename(link))
+  GET(link, write_disk(excel_path, overwrite = TRUE))
+
+  df <- read_excel(excel_path, sheet = 1)
+  
+  year <- str_extract(basename(link), "\\d{4}")
+
+  df <- df |>
+    mutate(DISTRICT_CODE = str_sub(`Agency Code`, -4),
+           Year = year,
+           across(c(Year, `% Free and Reduced`), as.numeric)) |> # can include `% Free` and `% Reduced Price`
+    select(c(DISTRICT_CODE, Year, `% Free and Reduced`)) # same here
+
+  food_data_2[[basename(link)]] <- df
+
+  file_delete(excel_path)
+}
+
+food2 <- bind_rows(food_data_2)
+
+food <- bind_rows(food, food2)
+
+combined <- full_join(combined, food, by = c("Dist Code" = "DISTRICT_CODE", "Year" = "Year"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+school_data <- combined |> 
+  group_by(`Dist Code`) |>  
+  fill(`District Name`, .direction = "downup") |> 
+  ungroup() |> 
+  mutate(`Homeless Share` = `Homeless Count` / `Enrollment Count`) |> 
+  rename(dist_code = `Dist Code`,
+         dist_name = `District Name`,
+         year = Year,
+         attendance_rate = `Attendance Rate`,
+         enrollment = `Enrollment Count`,
+         completion_share = `HS Completion Rate`,
+         act_composite = Composite,
+         act_writing = Writing,
+         lunch_share = `% Free and Reduced`,
+         homeless_share = `Homeless Share`) |> 
+  select(c(year, dist_name, dist_code, enrollment, attendance_rate, lunch_share, homeless_share, completion_share, act_composite, act_writing))
+```
+
+```{r}
+school_data_avg <- school_data |> 
+  group_by(year) |> 
+  summarize(across(where(is.numeric), mean, na.rm = TRUE))
+```
+
+```{r}
+school_data |> 
+  filter(str_detect(dist_name, "Everest")) |> 
+  arrange(desc(year))
+```
+
