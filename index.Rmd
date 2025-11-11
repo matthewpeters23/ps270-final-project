@@ -9,7 +9,7 @@ output:
     number_sections: false
     theme: yeti
     code_folding: hide
-
+    css: "custom.css"
 ---
 
 # Phase I: Original Submission
@@ -36,6 +36,7 @@ Actual days of attendance represents the number of days a student was physically
 library(tidyverse)
 library(readxl)
 library(kableExtra)
+library(patchwork)
 library(corrplot)
 library(plm)
 library(lmtest)
@@ -199,58 +200,79 @@ plot_custom_boxplot <- function(data, y_var, y_label, title) {
 ```{r, message=FALSE, warning=FALSE}
 school_data_factor <- school_data |>  mutate(year = as.factor(year))
 
-plot_custom_boxplot(school_data_factor, "attendance_rate",
+bp1 <- plot_custom_boxplot(school_data_factor, "attendance_rate",
                     "Average Daily Attendance Rate (%)",
                     "Student Attendance Rates") +
   scale_y_continuous(labels = scales::percent, limits = c(0.92, 0.97)) +
   annotate("text", x = 7, y = 0.92, label = "*2019 Omitted", color = "red3")
 
-plot_custom_boxplot(school_data_factor, "reduced_share",
+bp2 <- plot_custom_boxplot(school_data_factor, "reduced_share",
                     "Students Eligible for Reduced-price Lunch (%)",
                     "Students Receiving Reduced-price Meals") +
   scale_y_continuous(labels = scales::percent, limits = c(0, 0.5)) +
   annotate("text", x = 8, y = 0, label = "*2021 Omitted", color = "red3")
 
-plot_custom_boxplot(school_data_factor, "free_share",
+bp3 <- plot_custom_boxplot(school_data_factor, "free_share",
                     "Students Eligible for Free-priced Lunch (%)",
                     "Students Receiving Free-priced Meals") +
   scale_y_continuous(labels = scales::percent, limits = c(0, 0.5)) +
   annotate("text", x = 8, y = 0, label = "*2021 Omitted", color = "red3")
 
-plot_custom_boxplot(school_data_factor, "homeless_share",
+bp4 <- plot_custom_boxplot(school_data_factor, "homeless_share",
                     "Students Identified as Homeless (%)",
                     "Prevalence of Student Homelessness") +
   scale_y_continuous(labels = scales::percent, limits = c(0, 0.03))
 
-plot_custom_boxplot(school_data_factor, "graduation_rate",
+bp5 <- plot_custom_boxplot(school_data_factor, "graduation_rate",
                     "High School Completion Rate (%)",
                     "High School Graduation") +
   scale_y_continuous(labels = scales::percent, limits = c(0.90, 0.98))
 
-plot_custom_boxplot(school_data_factor, "act_composite",
+bp6 <- plot_custom_boxplot(school_data_factor, "act_composite",
                     "Average ACT Composite Score (0-36)",
                     "ACT Composite Performance") +
   scale_y_continuous(limits = c(18, 21))
 
-plot_custom_boxplot(school_data_factor, "act_writing",
-                    "Average ACT Writing Score (0-12)",
-                    "ACT Writing Performance") +
-  scale_y_continuous(limits = c(5, 7))
+# bp7 <- plot_custom_boxplot(school_data_factor, "act_writing",
+#                     "Average ACT Writing Score (0-12)",
+#                     "ACT Writing Performance") +
+#   scale_y_continuous(limits = c(5, 7))
 
-plot_custom_boxplot(school_data_factor, "tec",
+bp8 <- plot_custom_boxplot(school_data_factor, "tec",
                     "Average Support Cost Per Student ($)",
                     "Cost Per Student (TEC)") +
   scale_y_continuous(labels = scales::label_dollar(), limits = c(11000, 18000))
 
-plot_custom_boxplot(school_data_factor, "rev_cost_ratio",
-                    "Ratio",
-                    "Revenue to Cost Ratio")  +
-  scale_y_continuous(limits = c(0.95, 1.1))
+# bp9 <- plot_custom_boxplot(school_data_factor, "rev_cost_ratio",
+#                     "Ratio",
+#                     "Revenue to Cost Ratio")  +
+#   scale_y_continuous(limits = c(0.95, 1.1))
+# 
+# bp10 <- plot_custom_boxplot(school_data_factor, "enrollment",
+#                     "Enrollment Count",
+#                     "Total District Enrollment") +
+#   scale_y_continuous(limits = c(400, 2100))
+```
 
-plot_custom_boxplot(school_data_factor, "enrollment",
-                    "Enrollment Count",
-                    "Total District Enrollment") +
-  scale_y_continuous(limits = c(400, 2100))
+```{r, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+cat('
+<div style="
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-height: 900px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+">
+')
+
+# Print plots in order (they'll fill two columns row by row)
+for (plot in list(bp3, bp2, bp1, bp4, bp5, bp6, bp8)) {
+  print(plot)
+}
+
+cat('</div>')
 ```
 
 ## Correlation Matrix
@@ -294,103 +316,132 @@ plot_relationship <- function(x_var, x_label) {
 ```
 
 ```{r, message=FALSE, warning=FALSE}
-plot_relationship("reduced_share", "Reduced-price Lunch Eligibility") +
+attend_p1 <- plot_relationship("free_share", "Free-price Lunch Eligibility") +
   scale_x_continuous(labels = scales::percent)
 
-plot_relationship("free_share", "Free-price Lunch Eligibility") +
+attend_p2 <- plot_relationship("reduced_share", "Reduced-price Lunch Eligibility") +
   scale_x_continuous(labels = scales::percent)
 
-plot_relationship("tec", "Cost Per Student")
+attend_p3 <- plot_relationship("tec", "Cost Per Student")
 
-plot_relationship("enrollment", "District Enrollment")
+attend_p4 <- plot_relationship("enrollment", "District Enrollment")
+```
+
+```{r, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+cat('
+<div style="
+  display: grid;
+  grid-template-columns: repeat(4, minmax(400px, 1fr)); /* Ensures each plot has a minimum width */
+  gap: 20px;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;  /* Hide vertical scroll */
+  border: 1px solid #ccc;
+  padding: 10px;
+  white-space: nowrap;
+">
+')
+
+# Print plots in order (they'll fill horizontally in a single row)
+for (plot in list(attend_p1, attend_p2, attend_p3, attend_p4)) {
+  print(plot)
+}
+
+cat('</div>')
 ```
 
 ## Multiple Regression
 
-Breusch-Pagan Test: determines whether the panel effect exists.
 
-Hausman Test: determines whether the error is correlated with the explanatory variables.
-```{r, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 school_data_alt <- school_data |> 
-  filter(year != 2020)
+  filter(year != 2020) |> 
+  mutate(year_norm = year - 2014)
 
-ols_model <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec), 
+ols_model <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec) + year_norm, 
                  data = school_data_alt, 
                  index = c("dist_code", "year"), 
                  model = "pooling")
 
 bptest <- plmtest(ols_model, data = school_data_alt, type = "bp")
 
-fe_model <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec), 
+fe_model <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec) + year_norm, 
                 data = school_data_alt, 
                 index = c("dist_code", "year"), 
                 model = "within") 
 
-re_model <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec), 
+re_model <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec) + year_norm, 
                 data = school_data_alt, 
                 index = c("dist_code", "year"), 
                 model = "random")
 
 hausman_test <- phtest(fe_model, re_model)
-
-p_values <- tibble(
-  Test = c("Breusch-Pagan", "Hausman"),
-  "P-value" = c(bptest$p.value, hausman_test$p.value)
-)
-
-kable(p_values, format = "markdown", digits = 5) |> 
-  kable_styling(full_width = FALSE, position = "center")
 ```
 
 
 ```{r, message=FALSE, warning=FALSE, results='hide'}
-attendance_ols <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec), 
+attendance_ols <- plm(attendance_rate ~ free_share + reduced_share + log(enrollment) + log(tec) + year_norm, 
                         data = school_data_alt, 
                         index = c("dist_code", "year"), 
                         model = "pooling")
-graduation_ols <- plm(graduation_rate ~ reduced_share + free_share + log(enrollment) + log(tec), 
+graduation_ols <- plm(graduation_rate ~ free_share + reduced_share + log(enrollment) + log(tec) + year_norm, 
                         data = school_data_alt, 
                         index = c("dist_code", "year"), 
                         model = "pooling")
-act_ols <- plm(act_composite ~ reduced_share + free_share + log(enrollment) + log(tec), 
+act_ols <- plm(act_composite ~ free_share + reduced_share + log(enrollment) + log(tec) + year_norm, 
                         data = school_data_alt, 
                         index = c("dist_code", "year"), 
                         model = "pooling")
 
 
-attendance_fixed <- plm(attendance_rate ~ reduced_share + free_share + log(enrollment) + log(tec), 
+attendance_fixed <- plm(attendance_rate ~ free_share + reduced_share + log(enrollment) + log(tec) + year_norm, 
                         data = school_data_alt, 
                         index = c("dist_code", "year"), 
                         model = "within")
-graduation_fixed <- plm(graduation_rate ~ reduced_share + free_share + log(enrollment) + log(tec), 
+graduation_fixed <- plm(graduation_rate ~ free_share + reduced_share + log(enrollment) + log(tec) + year_norm, 
                         data = school_data_alt, 
                         index = c("dist_code", "year"), 
                         model = "within")
-act_fixed <- plm(act_composite ~ reduced_share + free_share + log(enrollment) + log(tec), 
+act_fixed <- plm(act_composite ~ free_share + reduced_share + log(enrollment) + log(tec) + year_norm, 
                         data = school_data_alt, 
                         index = c("dist_code", "year"), 
                         model = "within")
 
+all_results <- list(attendance_ols, attendance_fixed, graduation_ols, graduation_fixed, act_ols, act_fixed)
 
-attendance_results <- list(attendance_ols, attendance_fixed, graduation_ols, graduation_fixed, act_ols, act_fixed)
+cluster_se <- function(model) {
+  se <- vcovHC(model, method = "arellano", type = "HC1", cluster = "group")
+  coeftest(model, vcov. = se)[, "Std. Error"]
+}
 
-stargazer(attendance_results,
+se_list <- lapply(all_results, cluster_se)
+
+stargazer(all_results,
           type = "text",
           title = "Determinants of Educational Outcomes in Wisconsin Public School Districts",
           keep.stat = c("n", "rsq"),
           align = TRUE,
-          dep.var.labels = c("Attendance Rate (%)", "Graduation Rate (%)", "ACT Composite Score"),
-          column.labels = c("(OLS)", "(Fixed)", "(OLS)", "(Fixed)", "(OLS)", "(Fixed)"),
+          dep.var.labels = c("Attendance Rate", "Graduation Rate", "ACT Composite Score"),
+          column.labels = c("(Pooled)", "(Within)", "(Pooled)", "(Within)", "(Pooled)", "(Within)"),
           model.names = FALSE,
           covariate.labels = c(
-            "Reduced-Price Lunch Eligibility(%)",
-            "Free Lunch Eligibility(%)",
+            "Free Lunch Eligibility",
+            "Reduced-Price Eligibility",
             "Log Total Enrollment",
-            "Log Cost Per Student"),
-          notes.label = "Significance levels")
+            "Log Cost Per Student",
+            "Year"),
+          se = se_list,
+          notes.label = "Significance levels",
+          notes = c("Regression models are estimated on data available from 2014–2018 and 2022–2023",
+                    "Note: Rates and eligibility range from 0 to 1 (e.g. 0.50 = 50%)"))
 ```
 
 ```{r, echo=FALSE, out.extra='style="display:block; margin:auto;"'}
 knitr::include_graphics("Regression.png")
 ```
+
+```{r, echo=FALSE, out.extra='style="display:block; margin:auto;"'}
+knitr::include_graphics("RegressionV2.png")
+```
+
 
